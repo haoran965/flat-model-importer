@@ -19,11 +19,13 @@
   "devDependencies": {
     "@netless/fastboard": "^0.3.3",
     "@netless/window-manager": "^0.4.30",
+    "@types/dat.gui": "^0.7.7",
     "@types/three": "^0.144.0",
     "vite": "^2.9.10",
     "white-web-sdk": "^2.16.24"
   },
   "dependencies": {
+    "dat.gui": "^0.7.9",
     "three": "^0.145.0"
   }
 }
