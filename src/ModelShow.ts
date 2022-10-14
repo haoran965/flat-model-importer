@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { AppContext } from "@netless/window-manager/dist/App/AppContext";
-import {RoomEnvironment} from "three/examples/jsm/environments/RoomEnvironment";
-import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Stats from "three/examples/jsm/libs/stats.module";
-import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader";
-import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import * as dat from "dat.gui";
-import {storage} from "three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements";
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
 
 interface ModelShowProps {
 	$container: HTMLDivElement;
@@ -72,7 +73,7 @@ export class ModelShow {
 	private initCamera() {
 		this.camera = new THREE.PerspectiveCamera(45, this.box.width / this.box.height, 0.1, 1000);
 		this.camera.position.set( 5, 2, 8 );
-		this.camera.lookAt(0, 0.5, 0);
+		this.camera.lookAt(0, 0, 0);
 	}
 
 	private initScene() {
@@ -336,6 +337,44 @@ export class ModelShow {
 		});
 	}
 
+	private loadGLTFModel(modelUrl: string) {
+		const loader = new GLTFLoader();
+		loader.load(modelUrl, (gltf) => {
+			const model = gltf.scene;
+			this.scene.add( model );
+		})
+	}
+
+	private loadOBJModel(modelUrl: string, option?: Option) {
+		const mtlUrl = option?.mtlUrl;
+		const loader = new OBJLoader();
+		if (mtlUrl) {
+			const mtlLoader = new MTLLoader();
+			mtlLoader.load(mtlUrl, (materials) => {
+				loader.setMaterials(materials);
+				loader.load(modelUrl, (obj) => {
+					this.scene.add(obj);
+				})
+			});
+		} else {
+			loader.load(modelUrl, (obj) => {
+				this.scene.add(obj);
+			})
+		}
+	}
+
+	loadModel(modelUrl: string, option?: Option) {
+		const modelLoaderRelation: { [key: string]: (modelUrl: string, option?: Option) => void } = {
+			glb: this.loadGLTFModel,
+			gltf: this.loadGLTFModel,
+			obj: this.loadOBJModel,
+		}
+		const modelType = modelUrl.split('.').pop();
+		if (modelType && modelLoaderRelation[modelType]) {
+			modelLoaderRelation[modelType].call(this, modelUrl, option);
+		}
+	}
+
 	private removeEvents() {
 		this.resizeObserver?.unobserve(this.$container);
 	}
@@ -343,7 +382,9 @@ export class ModelShow {
 	destroy() {
 		this.removeEvents();
 		this.$container.remove();
-		this.panelGUI?.destroy();
 	}
 }
 
+interface Option {
+	mtlUrl?: string;
+}
